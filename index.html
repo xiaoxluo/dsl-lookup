@@ -1,0 +1,749 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0a6cff" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="专线速查" />
+<title>集客专线SN码智能速查助手</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<style>
+  :root{
+    --brand:#0a6cff;--brand-d:#0053d6;--bg:#f2f4f8;--card:#fff;--line:#e6e9f0;
+    --txt:#1a2233;--sub:#6b7688;--ok:#12b76a;--warn:#f79009;--danger:#f04438;
+    --r:14px;--shadow:0 2px 10px rgba(20,40,90,.07);--sab:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .app{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  header.top{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;box-shadow:0 2px 12px rgba(10,108,255,.25)}
+  header.top .ttl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  header.top .l{display:flex;align-items:center;gap:10px}
+  header.top .logo{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:18px}
+  header.top h1{font-size:16px;margin:0;font-weight:700;line-height:1.25}
+  header.top .sub{font-size:11px;opacity:.9}
+  header.top .r{text-align:right;font-size:11px;opacity:.92;line-height:1.4}
+  main{flex:1;padding:14px 14px 96px}
+  .page{animation:fade .18s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--txt);display:flex;align-items:center;gap:7px}
+  .card h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--brand)}
+
+  .stats{display:flex;gap:8px;margin-bottom:14px}
+  .stat{flex:1;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:13px 8px;text-align:center}
+  .stat .n{font-size:21px;font-weight:800;color:var(--brand);white-space:nowrap}
+  .stat .n small{font-size:12px;font-weight:700}
+  .stat .t{font-size:11px;color:var(--sub);margin-top:2px}
+
+  label.f{display:block;font-size:12.5px;color:var(--sub);margin:12px 0 6px;font-weight:500}
+  label.f:first-of-type{margin-top:0}
+  label.f .req{color:var(--danger);margin-left:2px}
+  .inp{width:100%;border:1.5px solid var(--line);background:#fafbfe;border-radius:11px;padding:12px 13px;font-size:15px;color:var(--txt);outline:none;transition:.15s;font-family:inherit}
+  .inp:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(10,108,255,.1)}
+  .row2{display:flex;gap:10px}
+  .row2>div{flex:1}
+  .with-scan{display:flex;gap:8px;align-items:stretch}
+  .with-scan .inp{flex:1;min-width:0}
+  .btn-scan{flex:0 0 auto;border:none;border-radius:11px;background:var(--brand);color:#fff;padding:0 14px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:5px;cursor:pointer}
+  .btn{display:block;width:100%;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;margin-top:16px}
+  .btn:active{transform:scale(.985)}
+  .btn-primary{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(10,108,255,.28)}
+  .btn-ghost{background:#eef2fb;color:var(--brand);margin-top:10px}
+  .btn-line{background:#fff;color:var(--txt);border:1.5px solid var(--line)!important;margin-top:10px}
+  .btn-ok{background:var(--ok);color:#fff}
+  .btn-sm{width:auto;padding:9px 16px;font-size:13.5px;border-radius:10px;margin-top:0;display:inline-block}
+
+  .seg{display:flex;gap:8px;background:#eef1f6;border-radius:12px;padding:4px;margin-bottom:14px}
+  .seg button{flex:1;border:none;background:transparent;padding:10px;border-radius:9px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:inherit}
+  .seg button.active{background:#fff;color:var(--brand);box-shadow:var(--shadow)}
+
+  .hint{font-size:12.5px;color:var(--sub);background:#f5f7fb;border-radius:10px;padding:9px 12px;line-height:1.6;margin-top:12px}
+  .hint b{color:var(--txt)}
+
+  .result{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;animation:fade .2s ease}
+  .result .head{padding:12px 15px;font-size:14px;font-weight:700;color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
+  .result .head .sub{font-size:11.5px;font-weight:500;opacity:.95}
+  .result.ok .head{background:var(--ok)}
+  .result.warn .head{background:var(--warn)}
+  .result.none .head{background:#98a2b3}
+  .r-sec{padding:12px 15px;border-bottom:1px solid var(--line)}
+  .r-sec:last-child{border-bottom:none}
+  .r-sec .sec-t{font-size:12px;font-weight:700;color:var(--brand);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .r-sec .sec-t .tag{font-size:10.5px;background:#e8f1ff;color:var(--brand-d);padding:2px 8px;border-radius:10px;font-weight:600}
+  .r-sec .sec-t .tag.gray{background:#eef1f5;color:#6a7485}
+  .kv{padding:6px 0;display:flex;gap:12px;font-size:13.5px;border-bottom:1px dashed #eef1f6}
+  .kv:last-child{border-bottom:none}
+  .kv .k{color:var(--sub);flex:0 0 86px;font-size:12.5px}
+  .kv .v{flex:1;word-break:break-all;font-weight:500}
+  .kv .v.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
+  .badge.green{background:#e9f9f1;color:#0a7a4a}
+  .badge.orange{background:#fff4e5;color:#b25e09}
+  .badge.gray{background:#eef1f5;color:#556}
+  .badge.red{background:#fdecea;color:#c0392b}
+
+  .searchbar{position:relative;margin-bottom:12px}
+  .searchbar .inp{padding-left:40px;padding-right:40px}
+  .searchbar .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:16px}
+  .searchbar .clr{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:#e6e9f0;color:var(--sub);width:22px;height:22px;border-radius:50%;font-size:13px;line-height:1;cursor:pointer;display:none}
+  .searchbar .clr.show{display:block}
+
+  .rec{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;cursor:pointer;border-left:4px solid var(--brand)}
+  .rec:active{background:#fafcff}
+  .rec.miss{border-left-color:#98a2b3}
+  .rec .l1{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .sn-tag{background:#e8f1ff;color:var(--brand-d);font-weight:700;font-size:12.5px;padding:3px 10px;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .bh-tag{background:#e9f9f1;color:#0a7a4a;font-weight:600;font-size:12px;padding:3px 10px;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .miss-tag{background:#fdecea;color:#c0392b;font-weight:600;font-size:12px;padding:3px 10px;border-radius:8px}
+  .rec .cust{font-size:14px;font-weight:600;margin:6px 0 3px}
+  .rec .meta{font-size:12px;color:var(--sub);display:flex;gap:10px;flex-wrap:wrap}
+  .rec .meta .badge{}
+  .rec .hl{background:#fff3c4;border-radius:3px;padding:0 1px}
+
+  .empty{text-align:center;color:var(--sub);padding:40px 20px}
+  .empty .big{font-size:40px;margin-bottom:10px;opacity:.6}
+  .empty p{margin:4px 0;font-size:13.5px}
+
+  nav.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;background:#fff;display:flex;border-top:1px solid var(--line);padding-bottom:var(--sab);z-index:40}
+  nav.bottom .item{flex:1;padding:10px 0 8px;text-align:center;color:var(--sub);font-size:11px;cursor:pointer;border:none;background:none;font-family:inherit}
+  nav.bottom .item .ic{font-size:21px;display:block;margin-bottom:2px}
+  nav.bottom .item.active{color:var(--brand);font-weight:600}
+
+  .mask{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:60;display:none;align-items:flex-end;justify-content:center}
+  .mask.show{display:flex}
+  .sheet{background:#fff;width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:18px 18px calc(18px + var(--sab));max-height:90vh;overflow:auto;animation:up .22s ease}
+  @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:rgba(20,26,36,.92);color:#fff;padding:11px 20px;border-radius:12px;font-size:14px;z-index:99;opacity:0;transition:.25s;pointer-events:none;max-width:86%;text-align:center}
+  .toast.show{opacity:1}
+
+  .loading{text-align:center;padding:80px 20px;color:var(--sub)}
+  .loading .spin{width:34px;height:34px;border:3px solid #e6e9f0;border-top-color:var(--brand);border-radius:50%;margin:0 auto 14px;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .coll{display:none}
+  .coll.show{display:block}
+  .coll-btn{display:block;width:100%;border:none;background:#f5f7fb;color:var(--brand);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="ttl">
+      <div class="l">
+        <div class="logo">📡</div>
+        <div>
+          <h1>集客专线SN码智能速查</h1>
+          <div class="sub">一码即查 · 专线档案</div>
+        </div>
+      </div>
+      <div class="r" id="headerStats"></div>
+    </div>
+  </header>
+  <main id="main"></main>
+  <nav class="bottom">
+    <button class="item active" data-nav="home"><span class="ic">🔍</span>速查</button>
+    <button class="item" data-nav="add"><span class="ic">➕</span>补录</button>
+    <button class="item" data-nav="settings"><span class="ic">⚙️</span>设置</button>
+  </nav>
+</div>
+<div class="mask" id="sheetMask"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="html5-qrcode.min.js"></script>
+<script src="zxing.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* ============================================================
+ * 集客专线SN码智能速查助手 v2 —— 基于真实 ONU + 专线 双表关联
+ * 数据: 外部 data.json (已由脚本将 ONU信息 与 专线信息 通过"业务设备名称"合并)
+ * 本地补充: localStorage 追加映射, 与 data.json 记录合并查询
+ * ============================================================ */
+var EXTRA_KEY='sn_fast_extra_v2';
+var ALL=[];            // 合并后的记录数组
+var SN_INDEX={};       // sn -> [records]
+var BH_INDEX={};       // bh -> [records]
+var loaded=false;
+
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(function(){t.classList.remove('show')},1800)}
+
+/* ---------- 本地补充记录 ---------- */
+function loadExtra(){
+  try{ var r=localStorage.getItem(EXTRA_KEY); return r?JSON.parse(r):[]; }catch(e){return[]}
+}
+function saveExtra(arr){
+  try{ localStorage.setItem(EXTRA_KEY, JSON.stringify(arr)); }catch(e){ toast('保存失败'); }
+}
+
+/* ---------- 加载数据 ---------- */
+function init(allRecords, extra){
+  ALL = allRecords.concat(extra);
+  SN_INDEX={}; BH_INDEX={};
+  ALL.forEach(function(r){
+    if(r.sn){ (SN_INDEX[r.sn]=SN_INDEX[r.sn]||[]).push(r); }
+    if(r.bh){ (BH_INDEX[r.bh]=BH_INDEX[r.bh]||[]).push(r); }
+  });
+  loaded=true;
+  renderHome();
+}
+
+function fetchData(){
+  var loadingHtml='<div class="loading"><div class="spin"></div><p>正在加载台账数据…</p><p style="font-size:12px;opacity:.7">（'+(window.location.protocol==='file:'?'请用 HTTP 方式访问(见启动预览.bat)':'正在读取 data.json')+'）</p></div>';
+  $('#main').innerHTML=loadingHtml;
+  fetch('data.json',{cache:'no-store'}).then(function(res){
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return res.json();
+  }).then(function(json){
+    var recs=(json&&json.records)||[];
+    init(recs, loadExtra());
+  }).catch(function(){
+    init([], loadExtra());
+    var ne = $('#main'); if(ne){
+      ne.innerHTML='<div class="empty"><div class="big">⚠️</div><p>无法加载 data.json 数据</p><p style="font-size:12px">'+
+        (window.location.protocol==='file:'?'当前用 file:// 打开，浏览器禁止加载本地JSON。<br>请运行「启动预览.bat」或用 HTTPS 部署后访问。':'加载失败，请检查网络')+'</p></div>';
+    }
+  });
+}
+
+/* ============================================================
+ * 首页速查
+ * ============================================================ */
+function Stats(){
+  var uniqSn=Object.keys(SN_INDEX).length;
+  var uniqBh=Object.keys(BH_INDEX).length;
+  var withZx=ALL.filter(function(r){return r.zx}).length;
+  $('#headerStats').textContent='台账 '+(ALL.length/1000).toFixed(1)+'k · 专线 '+uniqBh;
+  return {total:ALL.length, sn:uniqSn, bh:uniqBh, withZx:withZx};
+}
+function renderHome(){
+  var s=Stats();
+  var html=
+    '<div class="stats">'+
+      '<div class="stat"><div class="n">'+s.total.toLocaleString()+'</div><div class="t">设备(ONU)记录</div></div>'+
+      '<div class="stat"><div class="n">'+s.sn.toLocaleString()+'</div><div class="t">SN唯一</div></div>'+
+      '<div class="stat"><div class="n">'+s.bh.toLocaleString()+'</div><div class="t">专线计费号</div></div>'+
+    '</div>'+
+    '<div class="card">'+
+      '<h2><span class="dot"></span>速查：SN码 / 计费号</h2>'+
+      '<div class="seg">'+
+        '<button id="modeSn" class="active" onclick="App.setMode(\'sn\')">📟 SN查专线</button>'+
+        '<button id="modeBh" onclick="App.setMode(\'bh\')">🎫 计费号查设备</button>'+
+      '</div>'+
+      '<div class="with-scan">'+
+        '<input class="inp" id="qInput" placeholder="输入SN码 或 计费号…" style="font-family:ui-monospace,Menlo,monospace">'+
+        '<button class="btn-scan" onclick="App.scanThenQuery()">📷 扫码</button>'+
+      '</div>'+
+      '<button class="btn btn-primary" onclick="App.doQuery()">立即查询</button>'+
+      '<div id="qResult"></div>'+
+      '<div class="hint">💡 输入 <b>SN码</b>(如 SN2024… 或 HWTC…) 即查该设备对应专线；输入 <b>计费号</b>(如 9976…) 反查该专线设备。数据由 ONU信息 + 专线信息 两表自动关联。</div>'+
+    '</div>';
+  $('#main').innerHTML=html;
+  bindNavActive('home');
+}
+window.App={
+  curMode:'sn',
+  setMode:function(m){
+    App.curMode=m;
+    var sn=$('#modeSn'),bh=$('#modeBh');
+    sn.classList.toggle('active',m==='sn'); bh.classList.toggle('active',m==='bh');
+    $('#qInput').placeholder = m==='sn'?'输入SN码 / 扫码设备…':'输入计费号 / 扫码…';
+    $('#qInput').focus();
+  },
+  doQuery:function(){
+    var kw=($('#qInput').value||'').trim(); if(!kw){toast('请输入SN码或计费号');return}
+    var bySn=SN_INDEX[kw]||[];
+    var byBh=BH_INDEX[kw]||[];
+    var isBh=/^\d{6,}/.test(kw);
+    var results = isBh ? (byBh.length?byBh:bySn) : (bySn.length?bySn:byBh);
+    renderQueryResult(kw, results);
+  },
+  scanThenQuery:function(){
+    openScanner(function(txt){ $('#qInput').value=txt; App.doQuery(); });
+  }
+};
+
+function zxStatusBadge(z){
+  if(!z) return '<span class="badge gray">未关联专线</span>';
+  var st=z.status||'';
+  var cls = /已复机|已开通|在用/.test(st)?'green':(/拆除|停/.test(st)?'red':(/调测|在建|复机/.test(st)?'orange':'gray'));
+  return '<span class="badge '+cls+'">'+esc(st)+'</span>';
+}
+function renderQueryResult(kw, results){
+  var box=$('#qResult'); if(!box) return;
+  if(!results.length){
+    box.innerHTML='<div class="result none"><div class="head"><span>⚠️ 未查到匹配记录</span></div>'+
+      '<div class="r-sec"><div class="sec-t">提示</div><div class="kv"><div class="k">说明</div><div class="v">未找到“'+esc(kw)+'”对应的记录，请核对 SN码 / 计费号，或到「补录」新增映射。</div></div></div></div>';
+    return;
+  }
+  var html='';
+  results.forEach(function(r,idx){
+    var hasZx=r.zx?true:false;
+    var headCls = hasZx?'ok':'warn';
+    html+='<div class="result '+headCls+'"><div class="head">'+
+      '<span>'+(hasZx?'✅ 查询命中':'🔍 查到设备（未关联专线）')+'</span>'+
+      '<span class="sub">匹配 '+(results.length>1?(idx+1)+'/'+results.length:'')+' · '+esc(r.sn)+'</span>'+
+      '</div>';
+
+    /* ONU 信息段 */
+    var o=r.onu||{};
+    html+='<div class="r-sec"><div class="sec-t">📦 设备(ONU)信息 <span class="tag">业务设备名称</span></div>'+
+      kv('SN', r.sn, 'mono')+
+      kv('业务设备名称', o.dev||'')+
+      kv('所属设施', o.facility||'')+
+      kv('主用OLT', o.olt||'')+
+      kv('OLT的PON口', o.oltPon||'')+
+      kv('归属分光器', o.splitter||'')+
+      kv('分光器端口', o.splitterPort||'')+
+      kv('管理IP', o.mgmtIp||'', 'mono')+
+      '</div>';
+
+    if(hasZx){
+      var z=r.zx;
+      html+='<div class="r-sec"><div class="sec-t">🔗 专线信息 '+zxStatusBadge(z)+'</div>'+
+        kv('专线计费号', z.bh, 'mono')+
+        kv('专线名称', z.name)+
+        kv('关联客户', z.customer)+
+        kv('完成状态', z.status)+
+        kv('业务带宽', z.band)+
+        kv('业务局端设备', z.busiDev||'')+
+        kv('SVLAN', z.svlan||'', 'mono')+
+        kv('CVLAN', z.cvlan||'', 'mono')+
+        kv('业务IPv4', z.ip||'', 'mono')+
+        '</div>';
+      html+='<div id="extra-'+idx+'" class="coll"><div class="r-sec">'+
+        '<div class="sec-t">🛰 传输接入信息</div>'+
+        kv('传输接入设备', z.transDev||'')+
+        kv('传输接入端口', z.transPort||'')+
+        kv('局端设备1', z.peer1||'')+
+        kv('局端设备1端口', z.peer1Port||'')+
+        kv('局端设备2', z.peer2||'')+
+        kv('局端设备2端口', z.peer2Port||'')+
+        '</div></div>';
+    } else {
+      html+='<div class="r-sec"><div class="sec-t"><span class="tag gray">待补录</span></div>'+
+        '<div class="kv"><div class="k">说明</div><div class="v">该设备尚未在专线台账中关联到计费号，可到「补录」补充映射。</div></div></div>';
+    }
+    html+='</div>';
+    if(hasZx){
+      html+='<button class="coll-btn" id="cb-'+idx+'" onclick="App.toggleExtra('+idx+')">🛰 展开/收起 传输接入信息</button>';
+    }
+  });
+  box.innerHTML=html;
+}
+window.App.toggleExtra=function(idx){
+  var c=$('#extra-'+idx); if(c) c.classList.toggle('show');
+};
+function kv(k,v,cls){
+  return '<div class="kv"><div class="k">'+esc(k)+'</div><div class="v'+(cls?' '+cls:'')+'">'+esc(v||'—')+'</div></div>';
+}
+
+/* ============================================================
+ * 台账浏览
+ * ============================================================ */
+function renderBrowse(){
+  var s=Stats();
+  var kw=$('#browseSearch')?$('#browseSearch').value:'';
+  var list=ALL.slice();
+  if(kw){
+    var k=kw.toLowerCase();
+    list=list.filter(function(r){
+      return (r.sn||'').toLowerCase().indexOf(k)>-1||(r.bh||'').toLowerCase().indexOf(k)>-1||
+        (r.onu&&r.onu.dev&&r.onu.dev.indexOf(k)>-1)||(r.zx&&r.zx.customer&&r.zx.customer.indexOf(k)>-1)||
+        (r.zx&&r.zx.name&&r.zx.name.indexOf(k)>-1);
+    });
+  }
+  var html='<div class="card"><h2><span class="dot"></span>台账浏览 · '+ALL.length.toLocaleString()+' 条</h2>'+
+    '<div class="searchbar"><span class="ic">🔎</span>'+
+    '<input class="inp" id="browseSearch" placeholder="搜索 SN/计费号/客户/设备…" value="'+esc(kw)+'" oninput="App.refreshBrowse(this.value)">'+
+    '<button class="clr'+(kw?' show':'')+'" id="browseClr" onclick="App.clearBrowse()">✕</button></div></div>';
+  if(!list.length){
+    html+='<div class="empty"><div class="big">🗂️</div><p>'+(kw?'无匹配记录':'暂无数据')+'</p></div>';
+  }else{
+    var show=Math.min(list.length, 500);
+    for(var i=0;i<show;i++){
+      var r=list[i]; var z=r.zx;
+      var tag = r.sn?('<span class="sn-tag">'+hl(r.sn,kw)+'</span>'):'';
+      var bhtag = r.bh?('<span class="bh-tag">'+hl(r.bh,kw)+'</span>'):'<span class="miss-tag">未关联</span>';
+      html+='<div class="rec'+(z?'':' miss')+'" onclick="App.showDetail('+i+')">'+
+        '<div class="l1">'+tag+bhtag+'</div>'+
+        '<div class="cust">'+(z?hl(z.customer,kw):hl((r.onu&&r.onu.dev)||'',kw))+'</div>'+
+        '<div class="meta">'+
+          (z?('<span>'+esc(z.band)+'</span><span>'+esc(z.status)+'</span>'+zxStatusBadge(z)):'<span>仅设备记录</span>')+
+          (r.onu&&r.onu.olt?'<span>'+esc(r.onu.olt)+'</span>':'')+
+        '</div></div>';
+    }
+    if(list.length>show) html+='<div class="empty"><p style="font-size:12px">仅显示前 '+show+' 条，请用搜索缩小范围</p></div>';
+  }
+  $('#main').innerHTML=html;
+  var clr=$('#browseClr'); if(clr) clr.classList.toggle('show',!!kw);
+  // 保存当前过滤列表供 detail 用
+  window._browseList=list;
+  bindNavActive('browse');
+}
+window.App.refreshBrowse=function(v){renderBrowse()};
+window.App.clearBrowse=function(){$('#browseSearch').value='';renderBrowse()};
+window.App.showDetail=function(i){
+  var r=window._browseList[i]; if(!r)return;
+  var kw=$('#browseSearch')?$('#browseSearch').value:'';
+  renderQueryDetail(r, kw);
+};
+function renderQueryDetail(r){
+  var box=$('#main');
+  var hasZx=r.zx?true:false;
+  var html='<button class="btn btn-line" onclick="renderBrowse()" style="margin-bottom:12px">‹ 返回台账</button>';
+  html+='<div class="result '+(hasZx?'ok':'warn')+'"><div class="head"><span>'+(hasZx?'✅ 专线档案':'🔍 设备记录（未关联专线）')+'</span><span class="sub">'+esc(r.sn)+'</span></div>';
+  var o=r.onu||{};
+  html+='<div class="r-sec"><div class="sec-t">📦 设备(ONU)信息</div>'+
+    kv('SN', r.sn,'mono')+kv('业务设备名称',o.dev)+kv('所属设施',o.facility)+
+    kv('主用OLT',o.olt)+kv('OLT的PON口',o.oltPon)+kv('归属分光器',o.splitter)+kv('分光器端口',o.splitterPort)+kv('管理IP',o.mgmtIp,'mono')+'</div>';
+  if(hasZx){
+    var z=r.zx;
+    html+='<div class="r-sec"><div class="sec-t">🔗 专线信息 '+zxStatusBadge(z)+'</div>'+
+      kv('专线计费号',z.bh,'mono')+kv('专线名称',z.name)+kv('关联客户',z.customer)+
+      kv('完成状态',z.status)+kv('业务带宽',z.band)+kv('业务局端设备',z.busiDev)+
+      kv('SVLAN',z.svlan,'mono')+kv('CVLAN',z.cvlan,'mono')+kv('业务IPv4',z.ip,'mono')+'</div>';
+    html+='<div class="r-sec"><div class="sec-t">🛰 传输接入信息</div>'+
+      kv('传输接入设备',z.transDev)+kv('传输接入端口',z.transPort)+
+      kv('局端设备1',z.peer1)+kv('局端设备1端口',z.peer1Port)+
+      kv('局端设备2',z.peer2)+kv('局端设备2端口',z.peer2Port)+'</div>';
+  }else{
+    html+='<div class="r-sec"><div class="sec-t"><span class="tag gray">待补录</span></div><div class="kv"><div class="k">说明</div><div class="v">该设备尚未关联专线，可到「补录」补充映射。</div></div></div>';
+  }
+  html+='</div>';
+  box.innerHTML=html;
+}
+
+/* ============================================================
+ * 补录（本地追加映射）
+ * ============================================================ */
+function renderAdd(){
+  $('#headerStats').textContent='补录 '+loadExtra().length+' 条';
+  $('#main').innerHTML=
+    '<div class="card"><h2><span class="dot"></span>本地补录 SN↔计费号</h2>'+
+    '<div style="font-size:12.5px;color:var(--sub);line-height:1.7;margin-bottom:4px">以下记录保存在<b>本机</b>，用于补充 data.json 中缺失的映射，随查询自动合并（优先级高于台账）。</div>'+
+    '<label class="f">SN码<span class="req">*</span></label>'+
+    '<div class="with-scan"><input class="inp" id="a_sn" placeholder="如 HWTC07495796 或 A10000000001"><button class="btn-scan" onclick="App.scanFill()">📷</button></div>'+
+    '<label class="f">专线计费号<span class="req">*</span></label>'+
+    '<input class="inp" id="a_bh" placeholder="如 99764636918">'+
+    '<label class="f">客户名称</label><input class="inp" id="a_cust" placeholder="客户名称">'+
+    '<label class="f">业务带宽</label><input class="inp" id="a_band" placeholder="如 100M">'+
+    '<label class="f">完成状态</label><input class="inp" id="a_status" value="已复机" placeholder="已复机/已拆除/调测中">'+
+    '<button class="btn btn-primary" onclick="App.saveAdd()">✓ 保存补录</button>'+
+    '<div id="extraList" style="margin-top:14px"></div>'+
+    '</div>';
+  renderExtraList();
+  bindNavActive('add');
+}
+function renderExtraList(){
+  var arr=loadExtra();
+  var box=$('#extraList'); if(!box) return;
+  if(!arr.length){ box.innerHTML=''; return }
+  var h='<div style="font-size:13px;font-weight:700;margin-bottom:8px">本地补录 ('+arr.length+')</div>';
+  arr.forEach(function(r){
+    h+='<div class="rec"><div class="l1"><span class="sn-tag">'+esc(r.sn)+'</span><span class="bh-tag">'+esc(r.bh)+'</span>'+
+      '<button class="icon-btn" style="float:right;border:none;background:#fdecea;color:#c0392b;border-radius:8px;width:30px;height:30px;cursor:pointer" onclick="App.delExtra(\''+esc(r.id)+'\')">🗑️</button></div>'+
+      '<div class="cust">'+esc(r.zx?r.zx.customer:'')+'</div>'+
+      '<div class="meta"><span>'+esc(r.zx?r.zx.band:'')+'</span><span>'+esc(r.zx?r.zx.status:'')+'</span></div></div>';
+  });
+  box.innerHTML=h;
+}
+window.App.scanFill=function(){ openScanner(function(txt){$('#a_sn').value=txt; toast('✅ 扫码成功'); }); };
+window.App.saveAdd=function(){
+  var sn=$('#a_sn').value.trim(); var bh=$('#a_bh').value.trim();
+  if(!sn){toast('请填写SN码');return}
+  if(!bh){toast('请填写计费号');return}
+  var arr=loadExtra();
+  arr.unshift({id:'x'+Date.now().toString(36), sn:sn, bh:bh, zx:{bh:bh, customer:$('#a_cust').value.trim(), band:$('#a_band').value.trim(), status:$('#a_status').value.trim()||'已复机', name:'', transDev:'', transPort:'', peer1:'', peer1Port:'', peer2:'', peer2Port:'', busiDev:'', svlan:'', cvlan:'', ip:''}});
+  saveExtra(arr);
+  ALL=ALL.concat([arr[0]]);
+  (SN_INDEX[sn]=SN_INDEX[sn]||[]).push(arr[0]);
+  (BH_INDEX[bh]=BH_INDEX[bh]||[]).push(arr[0]);
+  toast('已补录'); renderAdd();
+};
+window.App.delExtra=function(id){
+  var arr=loadExtra().filter(function(r){return r.id!==id});
+  saveExtra(arr);
+  // 重建
+  var base=window._baseRecords||[];
+  init(base, arr);
+  renderAdd();
+};
+
+/* ============================================================
+ * 设置
+ * ============================================================ */
+function renderSettings(){
+  var s=Stats();
+  $('#headerStats').textContent='';
+  $('#main').innerHTML=
+    '<div class="card"><h2><span class="dot"></span>数据台账</h2>'+
+      '<div class="kv"><div class="k">设备(ONU)</div><div class="v">'+s.total.toLocaleString()+' 条</div></div>'+
+      '<div class="kv"><div class="k">SN唯一</div><div class="v">'+s.sn.toLocaleString()+' 个</div></div>'+
+      '<div class="kv"><div class="k">专线计费号</div><div class="v">'+s.bh.toLocaleString()+' 个</div></div>'+
+      '<div class="kv"><div class="k">关联到专线</div><div class="v">'+s.withZx.toLocaleString()+' 条</div></div>'+
+      '<div class="kv"><div class="k">本地补录</div><div class="v">'+loadExtra().length+' 条</div></div>'+
+    '</div>'+
+    '<div class="card"><h2><span class="dot" style="background:#12b76a"></span>数据来源与关联</h2>'+
+      '<div style="font-size:12.5px;color:var(--sub);line-height:1.9">'+
+      '· 数据来源：<b>ONU信息.xlsx</b> + <b>专线信息.xlsx</b><br>'+
+      '· 关联字段：<b>业务设备名称</b>（两表共有）<br>'+
+      '· 查询：输入 <b>SN</b> → 匹配设备 → 关联专线档案；输入 <b>计费号</b> → 反查设备<br>'+
+      '· 图标说明：绿=已关联专线，灰=仅设备记录（待补录）'+
+      '</div>'+
+    '</div>'+
+    '<div class="card"><h2><span class="dot"></span>数据导入</h2>'+
+      '<p style="font-size:12.5px;color:var(--sub);margin-bottom:10px">当前使用内置真实台账（4,889 条）。如需更新，请导入新的 data.json 或补录数据。</p>'+
+      '<button class="btn btn-ghost" onclick="App.importCSV()">📥 导入 CSV 台账（扩展）</button>'+
+      '<button class="btn btn-line" onclick="$(\'#fileCSV\').click()" style="display:none" id="fileCSVInput">选择 CSV 文件</button>'+
+      '<input type="file" id="fileCSV" accept=".csv,.txt" style="display:none" onchange="App.importCSV(this)">'+
+    '</div>'+
+    '<div class="card"><h2><span class="dot"></span>备份 / 补录</h2>'+
+      '<button class="btn btn-ghost" onclick="App.exportJSON()">💾 导出本地补录</button>'+
+      '<button class="btn btn-line" onclick="$(\'#fileExtra\').click()">📂 导入补录数据</button>'+
+      '<input type="file" id="fileExtra" accept=".json" style="display:none" onchange="App.importExtra(this)">'+
+      '<button class="btn btn-danger" onclick="App.clearExtra()">🗑️ 清空补录</button>'+
+    '</div>'+
+    '<div class="card"><h2><span class="dot"></span>版本 / 说明</h2>'+
+      '<div style="font-size:12.5px;color:var(--sub);line-height:1.9">'+
+      '· 版本：<b>v2.0</b>（真实双表台账）<br>'+
+      '· 数据保存在本机浏览器，不上传服务器。<br>'+
+      '· ⚠️ 清除浏览器数据会丢失本地补录，请定期导出。<br>'+
+      '· 扫码需 HTTPS 或 localhost 环境，否则可手输。'+
+      '</div></div>';
+  bindNavActive('settings');
+}
+window.App.exportJSON=function(){
+  var arr=loadExtra();
+  var blob=new Blob([JSON.stringify({version:'2.0',extras:arr},null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='专线SN速查_本地补录_'+Date.now()+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  toast('已导出 '+arr.length+' 条');
+};
+window.App.importExtra=function(inp){
+  var f=inp.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(e){
+    try{ var o=JSON.parse(e.target.result); var arr=o.extras||[]; if(!arr.length){toast('无补录数据');return}
+      var cur=loadExtra(); saveExtra(arr.concat(cur)); var base=window._baseRecords||[]; init(base, cur.concat(arr)); toast('已导入 '+arr.length+' 条'); renderAdd();
+    }catch(err){toast('解析失败')}
+    inp.value='';
+  };
+  rd.readAsText(f);
+};
+window.App.clearExtra=function(){
+  if(!confirm('确认清空本地补录？(data.json 台账不受影响)'))return;
+  saveExtra([]); var base=window._baseRecords||[]; init(base,[]); toast('已清空'); renderAdd();
+};
+
+// CSV 导入（追加到本地补录或更新台账）
+window.App.importCSV=function(inp){
+  var file;
+  if(inp && inp.files && inp.files[0]){
+    file = inp.files[0];
+  } else {
+    $('input#fileCSV').click();
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      var text = e.target.result;
+      var lines = text.split('\n').filter(function(l){return l.trim()});
+      if(lines.length < 2){ toast('CSV 文件为空或格式不正确'); return; }
+      // 解析 CSV
+      function parseCSVLine(line){
+        var result=[], cur='', inQuotes=false;
+        for(var i=0;i<line.length;i++){
+          var c=line[i];
+          if(c==='"'){
+            if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; }
+            else inQuotes=!inQuotes;
+          } else if(c===',' && !inQuotes){
+            result.push(cur); cur='';
+          } else {
+            cur+=c;
+          }
+        }
+        result.push(cur);
+        return result.map(function(s){return s.trim()});
+      }
+      var headers = parseCSVLine(lines[0]);
+      var snIdx=headers.indexOf('SN码');
+      var bhIdx=headers.indexOf('专线计费号');
+      var custIdx=headers.indexOf('客户名称');
+      if(snIdx < 0 || bhIdx < 0){ toast('CSV 需包含 "SN码" 和 "专线计费号" 列'); return; }
+      var count=0;
+      for(var i=1;i<lines.length;i++){
+        var row=parseCSVLine(lines[i]);
+        if(!row[snIdx] || !row[bhIdx]) continue;
+        // 检查是否已存在
+        var sn=row[snIdx], bh=row[bhIdx];
+        var exists=(SN_INDEX[sn] && SN_INDEX[sn].some(function(r){return r.bh===bh})) || loadExtra().some(function(r){return r.sn===sn && r.bh===bh});
+        if(!exists){
+          var record={
+            id:'c'+Date.now()+'_'+i,
+            sn:sn,
+            bh:bh,
+            zx:{
+              bh:bh,
+              customer:row[custIdx]||'',
+              band:'',status:'',
+              name:'',transDev:'',transPort:'',
+              peer1:'',peer1Port:'',peer2:'',peer2Port:'',
+              busiDev:'',svlan:'',cvlan:'',ip:''
+            }
+          };
+          // 追加到补录
+          var cur=loadExtra();
+          cur.unshift(record);
+          saveExtra(cur);
+          // 同时更新内存
+          ALL.unshift(record);
+          (SN_INDEX[sn]=SN_INDEX[sn]||[]).push(record);
+          (BH_INDEX[bh]=BH_INDEX[bh]||[]).push(record);
+          count++;
+        }
+      }
+      toast('✅ 成功导入 '+count+' 条新记录');
+      if(inp)inp.value='';
+    }catch(err){
+      toast('导入失败：'+err.message);
+    }
+  };
+  reader.readAsText(file);
+};
+
+/* ---------- 导航 ---------- */
+function bindNavActive(which){
+  document.querySelectorAll('nav.bottom .item').forEach(function(x){x.classList.remove('active')});
+  var target=document.querySelector('nav.bottom .item[data-nav="'+which+'"]'); if(target)target.classList.add('active');
+}
+document.querySelectorAll('nav.bottom .item').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var nav=btn.getAttribute('data-nav');
+    if(!loaded){ fetchData(); }
+    else if(nav==='home')renderHome();
+    else if(nav==='browse')renderBrowse();
+    else if(nav==='add')renderAdd();
+    else if(nav==='settings')renderSettings();
+  });
+});
+
+/* ============================================================
+ * 扫码
+ * ============================================================ */
+var scanner=null;
+function openScanner(onSuccess){
+  showSheet(
+    '<h2 style="margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:8px"><span>📷</span>扫码识别设备SN码</h2>'+
+    '<div style="display:flex;gap:8px;margin-bottom:10px">'+
+      '<button class="btn btn-primary btn-sm" onclick="App._scanCam()">📷 摄像头</button>'+
+      '<button class="btn btn-line btn-sm" onclick="$(\'#scanFile\').click()">🖼️ 相册</button>'+
+      '<input type="file" id="scanFile" accept="image/*" style="display:none" onchange="App._scanImg(this.files)">'+
+    '</div>'+
+    '<div id="scanArea"><div style="text-align:center;color:var(--sub);padding:36px 0"><div style="font-size:34px">🔍</div><p style="margin:8px 0 0">对准设备SN码标签扫码，<br>或从相册选择条码图片。</p><p style="font-size:12px;opacity:.7;margin-top:8px">摄像头需 HTTPS；相册随时可用</p></div></div>',
+    function(){stopScan()}
+  );
+  window._scanSuccess=onSuccess;
+}
+window.App._scanCam=function(){
+  var area=$('#scanArea');
+  area.innerHTML='<div id="qc" style="background:#111;min-height:280px;border-radius:12px"></div><div style="text-align:center;color:var(--sub);font-size:12.5px;margin-top:8px">正在启动…</div>';
+  loadH5(function(){
+    scanner=new Html5Qrcode('qc',{verbose:false});
+    scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:230,height:130}},function(txt){
+      if(txt && window._scanSuccess){ stopScan(); window._scanSuccess(txt); toast('识别：'+txt); }
+    },function(){}).catch(function(e){
+      area.innerHTML='<div style="text-align:center;color:var(--warn);padding:26px 10px"><div style="font-size:34px">⚠️</div><p>无法启动摄像头</p><p style="font-size:12.5px">请用 HTTPS 访问，或改用“相册”。</p></div>';
+    });
+  },function(){
+    area.innerHTML='<div style="text-align:center;color:var(--danger);padding:26px 10px"><p>扫码库加载失败</p></div>';
+  });
+};
+window.App._scanImg=function(files){
+  if(!files||!files.length){toast('请选择图片');return}
+  var area=$('#scanArea');
+  loadH5(function(){
+    var h5=new Html5Qrcode('scanArea',{verbose:false});
+    h5.scanFile(files[0],false).then(function(txt){
+      stopScan(); if(window._scanSuccess) window._scanSuccess(txt); toast('识别：'+txt);
+    }).catch(function(){
+      loadZX(function(){
+        var rd=new ZXing.BrowserMultiFormatReader();
+        rd.decodeFromImageUrl(URL.createObjectURL(files[0])).then(function(r){
+          stopScan(); if(window._scanSuccess) window._scanSuccess(r.getText()); toast('识别：'+r.getText());
+        }).catch(function(){toast('未能识别')});
+      },function(){toast('未能识别')});
+    });
+  });
+};
+function showSheet(html,after){
+  $('#sheet').innerHTML=html; $('#sheetMask').classList.add('show');
+  window._afterSheetClose=after||null;
+}
+document.getElementById('sheetMask').addEventListener('click',function(e){ if(e.target.id==='sheetMask') closeSheet(); });
+function closeSheet(){
+  $('#sheetMask').classList.remove('show');
+  if(window._afterSheetClose){try{window._afterSheetClose()}catch(e){} window._afterSheetClose=null;}
+}
+function stopScan(){ if(scanner){try{scanner.stop().then(function(){scanner=null})}catch(e){scanner=null}} }
+// 延迟检测库加载（大文件加载后需要短暂延迟）
+window._libReady={h5q:false,zxing:false};
+function awaitLib(name,ok,fail){
+  function check(){
+    var lib, okLib=false;
+    if(name==='h5q'){
+      lib=window.Html5Qrcode;
+      okLib=!!lib && typeof lib === 'function';
+      if(okLib) window._libReady.h5q=true;
+    } else {
+      lib=window.ZXing;
+      okLib=!!lib && typeof lib === 'object';
+      if(okLib) window._libReady.zxing=true;
+    }
+    if(okLib){ ok(); }
+    else { setTimeout(check,100); }
+  }
+  setTimeout(check,100); // 给库一点初始化时间
+}
+function loadH5(ok,fail){
+  if(window.Html5Qrcode){
+    // 库已加载，直接执行回调
+    ok();
+  } else {
+    // 库未加载，动态加载
+    var s=document.createElement('script');s.src='html5-qrcode.min.js?v=4';
+    s.onload=function(){ ok(); };
+    s.onerror=function(){ fail(); };
+    document.head.appendChild(s);
+  }
+}
+function loadZX(ok,fail){
+  if(window.ZXing){
+    ok();
+  } else {
+    var s=document.createElement('script');s.src='zxing.min.js?v=4';
+    s.onload=function(){ ok(); };
+    s.onerror=function(){ fail(); };
+    document.head.appendChild(s);
+  }
+}
+
+/* ---------- PWA ---------- */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+
+/* ---------- 启动 ---------- */
+fetchData();
+})();
+</script>
+</body>
+</html>
